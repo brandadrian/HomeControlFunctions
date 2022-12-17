@@ -23,9 +23,8 @@ namespace HomeControlFunctions.Services
             _clientEndpoint = configuration.GetSection("CognitiveServicesEndpoint").Value;
         }
 
-        public async Task<List<string>> GetTextFromImage(string base64File)
+        public async Task<List<string>> GetTextFromImage(byte[] bytes)
         {
-            var bytes = Convert.FromBase64String(base64File);
             var client = Authenticate(_clientEndpoint, _subscriptionKey);
             var result = await ExtractText(client, bytes);
 
