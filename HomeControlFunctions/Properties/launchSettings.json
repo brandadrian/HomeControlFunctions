@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "HomeControlFunctions": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7119",
+      "launchBrowser": false
+    }
+  }
+}
