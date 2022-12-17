@@ -13,11 +13,11 @@ using HomeControlFunctions.Models;
 
 namespace HomeControlFunctions.Functions
 {
-    public class Ocr
+    public class OcrFunctions
     {
         private readonly OcrService _ocrService;
 
-        public Ocr(OcrService ocrService)
+        public OcrFunctions(OcrService ocrService)
         {
             _ocrService = ocrService;
         }
