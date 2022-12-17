@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
@@ -11,11 +12,49 @@ using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using HomeControlFunctions.Models;
 using Newtonsoft.Json;
+using HomeControlFunctions.Services;
 
 namespace HomeControlFunctions.Functions
 {
     public class GasRecordFunctions
     {
+        private readonly OcrService _ocrService;
+
+        public GasRecordFunctions(OcrService ocrService)
+        {
+            _ocrService = ocrService;
+        }
+
+        [FunctionName("UploadGasRecordFromFile")]
+        public async Task<IActionResult> UploadGasRecordFromFile(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req,
+            [Sql("dbo.GasRecords", ConnectionStringSetting = "HomeControlSqlConnection")] IAsyncCollector<GasRecordDao> gasRecords,
+            ILogger log)
+        {
+            log.LogInformation("UploadGasRecordFromFile request received.");
+
+            var fileBytes = Array.Empty<byte>();
+            var formData = await req.ReadFormAsync();
+            var file = req.Form.Files["file"];
+
+            using (var memoryStream = new MemoryStream())
+            {
+                await file.CopyToAsync(memoryStream);
+                fileBytes = memoryStream.ToArray();
+            }
+
+            var lines = await _ocrService.GetTextFromImage(fileBytes);
+            var firstLine = lines.FirstOrDefault()?.Replace(" ", string.Empty).Trim().Substring(0, 254);
+            var hasGasRecordValue = int.TryParse(firstLine, out var gasRecordValue);
+
+            await gasRecords.AddAsync(new GasRecordDao() { Value = hasGasRecordValue ? gasRecordValue : null, ValueRaw = firstLine, Timestamp = DateTime.Now });
+            await gasRecords.FlushAsync();
+
+            log.LogInformation($"Successfully inserted record. Lines: {lines.Count}. Values: {string.Join(';', lines)}");
+
+            return new OkResult();
+        }
+
         [FunctionName("InsertGasRecord")]
         public async Task<IActionResult> InsertGasRecord([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req, ILogger log, [Sql("dbo.GasRecords", ConnectionStringSetting = "HomeControlSqlConnection")] IAsyncCollector<GasRecordDao> gasRecords)
         {

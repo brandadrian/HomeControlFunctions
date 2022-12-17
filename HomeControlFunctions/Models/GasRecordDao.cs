@@ -9,6 +9,8 @@ namespace HomeControlFunctions.Models
 
         public DateTime Timestamp { get; set; }
 
-        public int Value { get; set; }
+        public int? Value { get; set; }
+
+        public string ValueRaw { get; set; }
     }
 }
