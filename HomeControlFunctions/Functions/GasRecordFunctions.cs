@@ -47,7 +47,7 @@ namespace HomeControlFunctions.Functions
             var firstLine = lines.FirstOrDefault()?.Replace(" ", string.Empty).Trim().Truncate( 254);
             var hasGasRecordValue = int.TryParse(firstLine, out var gasRecordValue);
 
-            await gasRecords.AddAsync(new GasRecordDao() { Value = hasGasRecordValue ? gasRecordValue : null, ValueRaw = firstLine, Timestamp = DateTime.Now });
+            await gasRecords.AddAsync(new GasRecordDao() { Value = hasGasRecordValue ? gasRecordValue : null, ValueRaw = firstLine, Timestamp = DateTime.UtcNow });
             await gasRecords.FlushAsync();
 
             log.LogInformation($"Successfully inserted record. Lines: {lines.Count}. Values: {string.Join(';', lines)}");
