@@ -44,10 +44,17 @@ namespace HomeControlFunctions.Functions
             }
 
             var lines = await _ocrService.GetTextFromImage(fileBytes);
-            var firstLine = lines.FirstOrDefault()?.Replace(" ", string.Empty).Trim().Truncate( 254);
+            var firstLine = lines.FirstOrDefault();
             var hasGasRecordValue = int.TryParse(firstLine, out var gasRecordValue);
+            var image = Convert.ToBase64String(fileBytes);
 
-            await gasRecords.AddAsync(new GasRecordDao() { Value = hasGasRecordValue ? gasRecordValue : null, ValueRaw = firstLine, Timestamp = DateTime.UtcNow });
+            await gasRecords.AddAsync(new GasRecordDao()
+            {
+                Value = hasGasRecordValue ? gasRecordValue : null,
+                ValueRaw = firstLine,
+                Timestamp = DateTime.UtcNow,
+                Image = image
+            });
             await gasRecords.FlushAsync();
 
             log.LogInformation($"Successfully inserted record. Lines: {lines.Count}. Values: {string.Join(';', lines)}");

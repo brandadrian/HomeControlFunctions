@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace HomeControlFunctions.Models
 {
@@ -12,5 +11,7 @@ namespace HomeControlFunctions.Models
         public int? Value { get; set; }
 
         public string ValueRaw { get; set; }
+
+        public string Image { get; set; }
     }
 }
