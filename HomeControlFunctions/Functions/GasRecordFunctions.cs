@@ -45,13 +45,14 @@ namespace HomeControlFunctions.Functions
 
             var lines = await _ocrService.GetTextFromImage(fileBytes);
             var firstLine = lines.FirstOrDefault();
-            var hasGasRecordValue = int.TryParse(firstLine, out var gasRecordValue);
+            var value = firstLine?.Replace(" ", string.Empty).Trim();
+            var hasGasRecordValue = int.TryParse(value, out var gasRecordValue);
             var image = Convert.ToBase64String(fileBytes);
 
             await gasRecords.AddAsync(new GasRecordDao()
             {
                 Value = hasGasRecordValue ? gasRecordValue : null,
-                ValueRaw = firstLine,
+                ValueRaw = string.Join(";", lines),
                 Timestamp = DateTime.UtcNow,
                 Image = image
             });
@@ -87,7 +88,7 @@ namespace HomeControlFunctions.Functions
         }
 
         [FunctionName("GetGasRecords")]
-        public async Task<IActionResult> GetGasRecords([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req, ILogger log, [Sql("SELECT * FROM dbo.GasRecords", CommandType = CommandType.Text, ConnectionStringSetting = "HomeControlSqlConnection")] IEnumerable<GasRecordDao> gasRecords)
+        public async Task<IActionResult> GetGasRecords([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req, ILogger log, [Sql("SELECT * FROM dbo.GasRecords ", CommandType = CommandType.Text, ConnectionStringSetting = "HomeControlSqlConnection")] IEnumerable<GasRecordDao> gasRecords)
         {
             log.LogInformation("Get gas records.");
 
