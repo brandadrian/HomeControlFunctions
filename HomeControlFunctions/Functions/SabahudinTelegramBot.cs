@@ -22,8 +22,8 @@ namespace HomeControlFunctions.Functions
         public SabahudinTelegramBot(IConfiguration configuration)
         {
             var telegramApiKey = configuration.GetSection("SabahudinTelegramApiKey").Value;
-            _sabahudinTelegramResponses.AddRange(configuration.GetSection("SabahudinTelegramResponses").Get<List<string>>());
             _botClient = new TelegramBotClient(telegramApiKey);
+            Init(configuration);
         }
 
         private const string SetUpFunctionName = "setupsabahudin";
@@ -95,6 +95,19 @@ namespace HomeControlFunctions.Functions
             catch
             {
                 return "I nix versteh";
+            }
+        }
+
+        private void Init(IConfiguration configuration)
+        {
+            try
+            {
+                _sabahudinTelegramResponses.AddRange(configuration.GetSection("SabahudinTelegramResponses").Get<List<string>>());
+            }
+            catch
+            {
+                Console.WriteLine("Error loading responses");
+                //Ignore
             }
         }
     }
