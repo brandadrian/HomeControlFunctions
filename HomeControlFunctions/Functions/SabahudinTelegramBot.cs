@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Globalization;
@@ -26,27 +27,50 @@ namespace HomeControlFunctions.Functions
         private const string UpdateFunctionName = "handleupdatesabahudin";
 
         [FunctionName(SetUpFunctionName)]
-        public async Task RunAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequest req)
+        public async Task RunAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequest req, ILogger log)
         {
-            var handleUpdateFunctionUrl = req.GetDisplayUrl().Replace(SetUpFunctionName, UpdateFunctionName,
-                                                ignoreCase: true, culture: CultureInfo.InvariantCulture);
-            await _botClient.SetWebhookAsync(handleUpdateFunctionUrl);
+            try
+            {
+                var handleUpdateFunctionUrl = req.GetDisplayUrl().Replace(SetUpFunctionName, UpdateFunctionName,
+                    ignoreCase: true, culture: CultureInfo.InvariantCulture);
+                await _botClient.SetWebhookAsync(handleUpdateFunctionUrl);
+            }
+            catch (Exception e)
+            {
+                log.LogError(e, "Error handling request.");
+                throw;
+            }
         }
 
         [FunctionName(UpdateFunctionName)]
-        public async Task Run([HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequest req)
+        public async Task Run([HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequest req, ILogger log)
         {
-            var request = await req.ReadAsStringAsync();
-            var update = JsonConvert.DeserializeObject<Telegram.Bot.Types.Update>(request);
+            try
+            {
+                var request = await req.ReadAsStringAsync();
 
-            if (update.Type != UpdateType.Message)
-                return;
-            if (update.Message!.Type != MessageType.Text)
-                return;
+                var update = JsonConvert.DeserializeObject<Telegram.Bot.Types.Update>(request);
 
-            await _botClient.SendTextMessageAsync(
-            chatId: update.Message.Chat.Id,
-            text: GetSabahudinsAnswer(update?.Message?.Chat?.FirstName, update?.Message?.Chat?.LastName, update.Message.Text));
+                var firstName = update?.Message?.Chat?.FirstName;
+                var lastName = update?.Message?.Chat?.LastName;
+                var text = update?.Message?.Text;
+
+                log.LogInformation("Request received. FirstName: {FirstName}. LastName: {LastName}. Text: {Text}", firstName, lastName, text);
+
+                if (update.Type != UpdateType.Message)
+                    return;
+                if (update.Message!.Type != MessageType.Text)
+                    return;
+
+                await _botClient.SendTextMessageAsync(
+                    chatId: update.Message.Chat.Id,
+                    text: GetSabahudinsAnswer(firstName, lastName, text));
+            }
+            catch (Exception e)
+            {
+                log.LogError(e, "Error handling request.");
+                throw;
+            }
         }
 
         private string GetSabahudinsAnswer(string? senderFirstName, string? senderLastName, string messageText)
