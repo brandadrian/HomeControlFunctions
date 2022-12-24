@@ -17,13 +17,13 @@ namespace HomeControlFunctions.Functions
     public class SabahudinTelegramBot
     {
         private readonly TelegramBotClient _botClient;
-        private readonly List<string> _sabahudinTelegramResponses = new List<string>();
+        private readonly IConfiguration _configuration;
 
         public SabahudinTelegramBot(IConfiguration configuration)
         {
-            var telegramApiKey = configuration.GetSection("SabahudinTelegramApiKey").Value;
+            _configuration = configuration;
+            var telegramApiKey = _configuration.GetSection("SabahudinTelegramApiKey").Value;
             _botClient = new TelegramBotClient(telegramApiKey);
-            Init(configuration);
         }
 
         private const string SetUpFunctionName = "setupsabahudin";
@@ -66,7 +66,7 @@ namespace HomeControlFunctions.Functions
 
                 await _botClient.SendTextMessageAsync(
                     chatId: update.Message.Chat.Id,
-                    text: GetSabahudinsAnswer(firstName, lastName, text));
+                    text: GetSabahudinsAnswer(firstName, lastName, text, log));
             }
             catch (Exception e)
             {
@@ -75,22 +75,25 @@ namespace HomeControlFunctions.Functions
             }
         }
 
-        private string GetSabahudinsAnswer(string? senderFirstName, string? senderLastName, string messageText)
+        private string GetSabahudinsAnswer(string? senderFirstName, string? senderLastName, string messageText, ILogger log)
         {
             try
             {
                 var responseName = string.IsNullOrEmpty(senderFirstName) ? senderLastName : (senderFirstName ?? "curaz");
+                var sabahudinTelegramResponses = new List<string>();
 
-                _sabahudinTelegramResponses.Add($"{responseName} ash patat?");
-                _sabahudinTelegramResponses.Add($"Ash epfel {responseName}? Bruhe ajne");
-                _sabahudinTelegramResponses.Add($"Frelihe wajnahte {responseName}");
-                _sabahudinTelegramResponses.Add($"Wj isch tinj name showjder? Tje {responseName} rihtik?");
-                _sabahudinTelegramResponses.Add($"oo {responseName} tu bisch ajne gute man");
+                AddResponsesFromConfig(sabahudinTelegramResponses, log);
+                    
+                sabahudinTelegramResponses.Add($"{responseName} ash patat?");
+                sabahudinTelegramResponses.Add($"Ash epfel {responseName}? Bruhe ajne");
+                sabahudinTelegramResponses.Add($"Frelihe wajnahte {responseName}");
+                sabahudinTelegramResponses.Add($"Wj isch tinj name showjder? Tje {responseName} rihtik?");
+                sabahudinTelegramResponses.Add($"oo {responseName} tu bisch ajne gute man");
 
                 var random = new Random();
-                var randomNumer = random.Next(0, _sabahudinTelegramResponses.Count - 1);
+                var randomNumer = random.Next(0, sabahudinTelegramResponses.Count - 1);
 
-                return _sabahudinTelegramResponses[randomNumer];
+                return sabahudinTelegramResponses[randomNumer];
             }
             catch
             {
@@ -98,16 +101,19 @@ namespace HomeControlFunctions.Functions
             }
         }
 
-        private void Init(IConfiguration configuration)
+        private void AddResponsesFromConfig(List<string> sabahudinTelegramResponses, ILogger log)
         {
             try
             {
-                _sabahudinTelegramResponses.AddRange(configuration.GetSection("SabahudinTelegramResponses").Get<List<string>>());
+                log.LogInformation("Start add responses from config.");
+                var responses = _configuration.GetSection("SabahudinTelegramResponses").Get<List<string>>();
+                log.LogInformation("Responses: {Responses}", string.Join(';', responses));
+                sabahudinTelegramResponses.AddRange(_configuration.GetSection("SabahudinTelegramResponses").Get<List<string>>());
+                log.LogInformation("Responses added");
             }
-            catch
+            catch (Exception e)
             {
-                Console.WriteLine("Error loading responses");
-                //Ignore
+                log.LogError(e, "Error loading responses.");
             }
         }
     }
