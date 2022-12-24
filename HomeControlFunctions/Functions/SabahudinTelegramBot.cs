@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types.Enums;
@@ -84,12 +85,16 @@ namespace HomeControlFunctions.Functions
 
                 AddResponsesFromConfig(sabahudinTelegramResponses, log);
                     
-                sabahudinTelegramResponses.Add($"{responseName} ash patat?");
-                sabahudinTelegramResponses.Add($"Ash epfel {responseName}? Bruhe ajne");
+                sabahudinTelegramResponses.Add("Ash patat?");
                 sabahudinTelegramResponses.Add($"Frelihe wajnahte {responseName}");
-                sabahudinTelegramResponses.Add($"Wj isch tinj name showjder? Tje {responseName} rihtik?");
                 sabahudinTelegramResponses.Add($"oo {responseName} tu bisch ajne gute man");
-
+                sabahudinTelegramResponses.Add("ojte pil geshenke gal");
+                sabahudinTelegramResponses.Add("prcc pinj es patat mit flajsch vom hajne majmuni fjr wajnahte");
+                sabahudinTelegramResponses.Add("Ash epjs bechomt vom santalcos?");
+                sabahudinTelegramResponses.Add("Pesser ge tune fjr wajnahte. Pillig pesser");
+                sabahudinTelegramResponses.Add("I wjnsche ham tjr frehlijh wajnahte");
+                sabahudinTelegramResponses.Add("I abe geklaut majne christbaum vom mini narbar tje tummi sieh");
+                
                 var random = new Random();
                 var randomNumer = random.Next(0, sabahudinTelegramResponses.Count - 1);
 
@@ -106,9 +111,10 @@ namespace HomeControlFunctions.Functions
             try
             {
                 log.LogInformation("Start add responses from config.");
-                var responses = _configuration.GetSection("SabahudinTelegramResponses").Get<List<string>>();
+                var responsesRaw = _configuration.GetSection("SabahudinTelegramResponses").Value;
+                var responses = responsesRaw.Split(';').ToList();
                 log.LogInformation("Responses: {Responses}", string.Join(';', responses));
-                sabahudinTelegramResponses.AddRange(_configuration.GetSection("SabahudinTelegramResponses").Get<List<string>>());
+                sabahudinTelegramResponses.AddRange(responses);
                 log.LogInformation("Responses added");
             }
             catch (Exception e)
