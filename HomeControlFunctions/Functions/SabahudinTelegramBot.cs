@@ -100,7 +100,7 @@ namespace HomeControlFunctions.Functions
             try
             {
                 log.LogInformation("Start add responses from config.");
-                var responses = _configuration.Value.SabahudinTelegramResponses;
+                var responses = _configuration.Value.SabahudinTelegramResponses.Split(';');
                 log.LogInformation("Responses: {Responses}", string.Join(';', responses));
                 sabahudinTelegramResponses.AddRange(responses);
                 log.LogInformation("Responses added");

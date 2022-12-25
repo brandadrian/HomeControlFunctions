@@ -14,6 +14,6 @@ namespace HomeControlFunctions.Configuration
         
         public string SabahudinTelegramApiKey { get; set; }
 
-        public List<string> SabahudinTelegramResponses { get; set; }
+        public string SabahudinTelegramResponses { get; set; }
     }
 }
