@@ -1,12 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
-using System.Threading;
+﻿using HomeControlFunctions.Configuration;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision.Models;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace HomeControlFunctions.Services
 {
@@ -16,11 +17,11 @@ namespace HomeControlFunctions.Services
         private readonly string _subscriptionKey;
         private readonly string _clientEndpoint;
 
-        public OcrService(ILogger<OcrService> logger, IConfiguration configuration)
+        public OcrService(ILogger<OcrService> logger, IOptions<ConfigurationOptions> configuration)
         {
             _logger = logger;
-            _subscriptionKey = configuration.GetSection("CognitiveServicesSubscriptionKey").Value;
-            _clientEndpoint = configuration.GetSection("CognitiveServicesEndpoint").Value;
+            _subscriptionKey = configuration.Value.CognitiveServicesSubscriptionKey;
+            _clientEndpoint = configuration.Value.CognitiveServicesEndpoint;
         }
 
         public async Task<List<string>> GetTextFromImage(byte[] bytes)

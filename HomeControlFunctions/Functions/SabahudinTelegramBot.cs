@@ -1,14 +1,14 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using HomeControlFunctions.Configuration;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types.Enums;
@@ -18,12 +18,12 @@ namespace HomeControlFunctions.Functions
     public class SabahudinTelegramBot
     {
         private readonly TelegramBotClient _botClient;
-        private readonly IConfiguration _configuration;
+        private readonly IOptions<ConfigurationOptions> _configuration;
 
-        public SabahudinTelegramBot(IConfiguration configuration)
+        public SabahudinTelegramBot(IOptions<ConfigurationOptions> configuration)
         {
             _configuration = configuration;
-            var telegramApiKey = _configuration.GetSection("SabahudinTelegramApiKey").Value;
+            var telegramApiKey = _configuration.Value.SabahudinTelegramApiKey;
             _botClient = new TelegramBotClient(telegramApiKey);
         }
 
@@ -100,8 +100,7 @@ namespace HomeControlFunctions.Functions
             try
             {
                 log.LogInformation("Start add responses from config.");
-                var responsesRaw = _configuration.GetSection("SabahudinTelegramResponses").Value;
-                var responses = responsesRaw.Split(';').ToList();
+                var responses = _configuration.Value.SabahudinTelegramResponses;
                 log.LogInformation("Responses: {Responses}", string.Join(';', responses));
                 sabahudinTelegramResponses.AddRange(responses);
                 log.LogInformation("Responses added");
