@@ -1,20 +1,21 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using HomeControlFunctions.Configuration;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 
 namespace HomeControlFunctions.Functions
 {
     public class TestFunctions
     {
-        private readonly IConfiguration _configuration;
+        private readonly IOptions<ConfigurationOptions> _configurationOptions;
 
-        public TestFunctions(IConfiguration configuration)
+        public TestFunctions(IOptions<ConfigurationOptions> configurationOptions)
         {
-            _configuration = configuration;
+            _configurationOptions = configurationOptions;
         }
 
         [FunctionName("Test")]
@@ -22,7 +23,7 @@ namespace HomeControlFunctions.Functions
         {
             log.LogInformation("Request received.");
 
-            var value = _configuration.GetSection("TestValue").Value;
+            var value = _configurationOptions.Value.TestValue;
 
             return await Task.FromResult(new OkObjectResult($"Function works... {value}"));
         }

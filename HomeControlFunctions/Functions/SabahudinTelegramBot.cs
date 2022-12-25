@@ -67,7 +67,7 @@ namespace HomeControlFunctions.Functions
 
                 await _botClient.SendTextMessageAsync(
                     chatId: update.Message.Chat.Id,
-                    text: GetSabahudinsAnswer(firstName, lastName, text, log));
+                    text: GetSabahudinsAnswer(log));
             }
             catch (Exception e)
             {
@@ -76,25 +76,14 @@ namespace HomeControlFunctions.Functions
             }
         }
 
-        private string GetSabahudinsAnswer(string? senderFirstName, string? senderLastName, string messageText, ILogger log)
+        private string GetSabahudinsAnswer(ILogger log)
         {
             try
             {
-                var responseName = string.IsNullOrEmpty(senderFirstName) ? senderLastName : (senderFirstName ?? "curaz");
                 var sabahudinTelegramResponses = new List<string>();
 
                 AddResponsesFromConfig(sabahudinTelegramResponses, log);
                     
-                sabahudinTelegramResponses.Add("Ash patat?");
-                sabahudinTelegramResponses.Add($"Frelihe wajnahte {responseName}");
-                sabahudinTelegramResponses.Add($"oo {responseName} tu bisch ajne gute man");
-                sabahudinTelegramResponses.Add("ojte pil geshenke gal");
-                sabahudinTelegramResponses.Add("prcc pinj es patat mit flajsch vom hajne majmuni fjr wajnahte");
-                sabahudinTelegramResponses.Add("Ash epjs bechomt vom santalcos?");
-                sabahudinTelegramResponses.Add("Pesser ge tune fjr wajnahte. Pillig pesser");
-                sabahudinTelegramResponses.Add("I wjnsche ham tjr frehlijh wajnahte");
-                sabahudinTelegramResponses.Add("I abe geklaut majne christbaum vom mini narbar tje tummi sieh");
-                
                 var random = new Random();
                 var randomNumer = random.Next(0, sabahudinTelegramResponses.Count - 1);
 
@@ -102,7 +91,7 @@ namespace HomeControlFunctions.Functions
             }
             catch
             {
-                return "I nix versteh";
+                return "...";
             }
         }
 

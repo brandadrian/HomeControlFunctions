@@ -1,4 +1,5 @@
-﻿using HomeControlFunctions.Services;
+﻿using HomeControlFunctions.Configuration;
+using HomeControlFunctions.Services;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +12,11 @@ namespace HomeControlFunctions
         public override void Configure(IFunctionsHostBuilder builder)
         {
             builder.Services.AddTransient<OcrService>();
+            builder.Services.AddOptions<ConfigurationOptions>()
+                .Configure<IConfiguration>((settings, configuration) =>
+                {
+                    configuration.GetSection("Values").Bind(settings);
+                });
         }
 
         public override void ConfigureAppConfiguration(IFunctionsConfigurationBuilder builder)
@@ -21,6 +27,7 @@ namespace HomeControlFunctions
                 .SetBasePath(context.ApplicationRootPath)
                 .AddJsonFile("settings.json", optional: true, reloadOnChange: false)
                 .AddJsonFile($"settings.{context.EnvironmentName}.json", optional: true, reloadOnChange: false)
+                .AddJsonFile($"local.settings.json", optional: true, reloadOnChange: false)
                 .AddEnvironmentVariables();
         }
     }
