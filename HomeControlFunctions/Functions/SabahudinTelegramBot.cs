@@ -65,8 +65,6 @@ namespace HomeControlFunctions.Functions
                 if (update.Message!.Type != MessageType.Text)
                     return;
 
-                log.LogInformation("PinnedMessage: {PinnedMessage}", update?.Message?.Chat?.PinnedMessage?.Text);
-
                 await _botClient.SendTextMessageAsync(
                     chatId: update.Message.Chat.Id,
                     text: GetSabahudinsAnswer(log));
