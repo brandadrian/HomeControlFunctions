@@ -1,18 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.IO;
-using System.Linq;
+﻿using HomeControlFunctions.Models;
+using HomeControlFunctions.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using System.Threading.Tasks;
-using HomeControlFunctions.Models;
 using Newtonsoft.Json;
-using HomeControlFunctions.Services;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace HomeControlFunctions.Functions
 {
@@ -31,36 +30,44 @@ namespace HomeControlFunctions.Functions
             [Sql("dbo.GasRecords", ConnectionStringSetting = "HomeControlSqlConnection")] IAsyncCollector<GasRecordDao> gasRecords,
             ILogger log)
         {
-            log.LogInformation("UploadGasRecordFromFile request received.");
-
-            var fileBytes = Array.Empty<byte>();
-            var formData = await req.ReadFormAsync();
-            var file = req.Form.Files["file"];
-
-            using (var memoryStream = new MemoryStream())
+            try
             {
-                await file.CopyToAsync(memoryStream);
-                fileBytes = memoryStream.ToArray();
+                log.LogInformation("UploadGasRecordFromFile request received.");
+
+                var fileBytes = Array.Empty<byte>();
+                var formData = await req.ReadFormAsync();
+                var file = req.Form.Files["file"];
+
+                using (var memoryStream = new MemoryStream())
+                {
+                    await file.CopyToAsync(memoryStream);
+                    fileBytes = memoryStream.ToArray();
+                }
+
+                var lines = await _ocrService.GetTextFromImage(fileBytes);
+                var firstLine = lines.FirstOrDefault();
+                var value = firstLine?.Replace(" ", string.Empty).Trim();
+                var hasGasRecordValue = int.TryParse(value, out var gasRecordValue);
+                var image = Convert.ToBase64String(fileBytes);
+
+                await gasRecords.AddAsync(new GasRecordDao()
+                {
+                    Value = hasGasRecordValue ? gasRecordValue : null,
+                    ValueRaw = string.Join(";", lines),
+                    Timestamp = DateTime.UtcNow,
+                    Image = image
+                });
+                await gasRecords.FlushAsync();
+
+                log.LogInformation($"Successfully inserted record. Lines: {lines.Count}. Values: {string.Join(';', lines)}");
+
+                return new OkResult();
             }
-
-            var lines = await _ocrService.GetTextFromImage(fileBytes);
-            var firstLine = lines.FirstOrDefault();
-            var value = firstLine?.Replace(" ", string.Empty).Trim();
-            var hasGasRecordValue = int.TryParse(value, out var gasRecordValue);
-            var image = Convert.ToBase64String(fileBytes);
-
-            await gasRecords.AddAsync(new GasRecordDao()
+            catch (Exception e)
             {
-                Value = hasGasRecordValue ? gasRecordValue : null,
-                ValueRaw = string.Join(";", lines),
-                Timestamp = DateTime.UtcNow,
-                Image = image
-            });
-            await gasRecords.FlushAsync();
-
-            log.LogInformation($"Successfully inserted record. Lines: {lines.Count}. Values: {string.Join(';', lines)}");
-
-            return new OkResult();
+                log.LogError(e, "Error while uploading gas record.");
+                throw;
+            }
         }
 
         [FunctionName("InsertGasRecord")]
@@ -90,9 +97,17 @@ namespace HomeControlFunctions.Functions
         [FunctionName("GetGasRecords")]
         public async Task<IActionResult> GetGasRecords([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req, ILogger log, [Sql("SELECT * FROM dbo.GasRecords ", CommandType = CommandType.Text, ConnectionStringSetting = "HomeControlSqlConnection")] IEnumerable<GasRecordDao> gasRecords)
         {
-            log.LogInformation("Get gas records.");
+            try
+            {
+                log.LogInformation("Get gas records.");
 
-            return await Task.FromResult(new OkObjectResult(gasRecords));
+                return await Task.FromResult(new OkObjectResult(gasRecords));
+            }
+            catch (Exception e)
+            {
+                log.LogError(e, "Error while getting gas records.");
+                throw;
+            }
         }
     }
 }
